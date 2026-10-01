@@ -50,6 +50,7 @@ class IntegrationTests(unittest.TestCase):
                 rows = fetch_tickets(url, TOKEN, page_size=10, max_retries=8, backoff=0.01)
             finally:
                 server.shutdown()
+                server.server_close()
             self.assertEqual(len(rows), counts["tickets"])
 
     def test_churn_view_matches_disconnects(self):

@@ -25,6 +25,7 @@ def run(raw_dir: Path, db_path: Path, report_path: Path, fail_rate: float = 0.0)
         raw_tickets = extract.fetch_tickets(base_url, TOKEN)
     finally:
         server.shutdown()
+        server.server_close()
     raw_customers = extract.read_csv(raw_dir / "customers.csv")
     raw_invoices = extract.read_csv(raw_dir / "invoices.csv")
     raw_usage = extract.read_csv(raw_dir / "usage.csv")
