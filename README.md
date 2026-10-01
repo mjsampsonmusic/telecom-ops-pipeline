@@ -14,7 +14,7 @@ dashboard. Pure Python standard library plus SQLite, so it runs anywhere with Py
 | **Transform** | Deduplicates re-exported rows, normalizes mixed date formats and inconsistent casing, maps unknown plans, computes resolution hours and SLA compliance, and quarantines tickets that reference unknown customers. Every cleanup action is logged. |
 | **Load** | Idempotent upserts into a star schema (`dim_customer`, `dim_date`, `fact_invoice`, `fact_ticket`, `fact_usage`). Re-running never duplicates rows. |
 | **Validate** | Seven post-load checks: row count reconciliation, orphan keys, invalid amounts, impossible timestamps, duplicate IDs, billing after disconnect. Results are written to `etl_run_log`. |
-| **Report** | SQL KPI views (revenue, ARPU, ticket volume, MTTR, SLA %, usage by plan, region health) rendered to a self-contained HTML dashboard. |
+| **Report** | SQL KPI views (revenue, ARPU, monthly churn, ticket volume, MTTR, SLA %, usage by plan, region health) rendered to a self-contained HTML dashboard. |
 | **Automate** | GitHub Actions runs the tests and the pipeline on every push and nightly, and publishes the dashboard as a build artifact. |
 
 ## Run it

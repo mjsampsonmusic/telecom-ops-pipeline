@@ -31,6 +31,8 @@ def _table(conn, sql, title):
 def render(conn, checks, out_path: Path) -> Path:
     rev = conn.execute("SELECT year_month, billed, arpu FROM v_monthly_revenue ORDER BY year_month").fetchall()
     tk = conn.execute("SELECT year_month, tickets_opened, sla_pct FROM v_ticket_kpis ORDER BY year_month").fetchall()
+    churn = conn.execute("SELECT year_month, churn_pct FROM v_monthly_churn ORDER BY year_month").fetchall()
+    avg_churn = round(sum(r[1] for r in churn) / len(churn), 2) if churn else 0
     latest = rev[-1]
     active = conn.execute("SELECT COUNT(*) FROM dim_customer WHERE is_active = 1").fetchone()[0]
     sla_all = conn.execute("SELECT ROUND(100.0*SUM(sla_met)/COUNT(sla_met),1) FROM fact_ticket").fetchone()[0]
@@ -43,6 +45,7 @@ def render(conn, checks, out_path: Path) -> Path:
         ("ARPU", f"${latest[2]:,.2f}"),
         ("SLA met (12 mo)", f"{sla_all}%"),
         ("Mean time to resolve", f"{mttr} h"),
+        ("Avg monthly churn", f"{avg_churn}%"),
         ("Data checks", f"{passed}/{len(checks)} passed"),
     ])
     checks_html = "".join(
@@ -71,6 +74,7 @@ def render(conn, checks, out_path: Path) -> Path:
 {_bar_chart([r[0] for r in rev], [r[1] for r in rev], "Monthly billed revenue ($)", fmt="{:,.0f}")}
 {_bar_chart([r[0] for r in tk], [r[1] for r in tk], "Tickets opened per month", color="#d9822b")}
 {_bar_chart([r[0] for r in tk], [r[2] or 0 for r in tk], "SLA compliance by month (%)", color="#1a7f37", fmt="{:.0f}")}
+{_bar_chart([r[0] for r in churn], [r[1] for r in churn], "Monthly churn rate (%)", color="#8e44ad", fmt="{:.2f}")}
 {_table(conn, "SELECT * FROM v_tickets_by_category", "Tickets by category")}
 {_table(conn, "SELECT * FROM v_usage_by_plan", "Average monthly download by plan (GB)")}
 {_table(conn, "SELECT * FROM v_region_health", "Region health")}

@@ -52,6 +52,18 @@ class IntegrationTests(unittest.TestCase):
                 server.shutdown()
             self.assertEqual(len(rows), counts["tickets"])
 
+    def test_churn_view_matches_disconnects(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp = Path(tmp)
+            run(tmp / "raw", tmp / "wh.db", tmp / "dash.html")
+            conn = sqlite3.connect(tmp / "wh.db")
+            rows = conn.execute("SELECT year_month, disconnects, churn_pct FROM v_monthly_churn").fetchall()
+            self.assertEqual(len(rows), 12)
+            expected = conn.execute("""SELECT COUNT(*) FROM dim_customer
+                                       WHERE end_date BETWEEN '2025-10-01' AND '2026-09-30'""").fetchone()[0]
+            self.assertEqual(sum(r[1] for r in rows), expected)
+            self.assertTrue(all(0 <= r[2] < 100 for r in rows))
+
     def test_end_to_end_run_is_idempotent(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp = Path(tmp)

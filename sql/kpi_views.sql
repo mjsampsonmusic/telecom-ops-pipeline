@@ -52,3 +52,29 @@ FROM dim_customer c
 LEFT JOIN fact_ticket t ON t.customer_key = c.customer_key
 GROUP BY c.region
 ORDER BY tickets_per_active_customer DESC;
+
+DROP VIEW IF EXISTS v_monthly_churn;
+CREATE VIEW v_monthly_churn AS
+WITH months AS (
+    SELECT DISTINCT d.year_month,
+           d.year_month || '-01'                            AS month_start,
+           date(d.year_month || '-01', '+1 month', '-1 day') AS month_end
+    FROM fact_invoice f
+    JOIN dim_date d ON d.date_key = f.date_key
+),
+counts AS (
+    SELECT m.year_month,
+           SUM(CASE WHEN c.start_date <= m.month_start
+                     AND (c.end_date IS NULL OR c.end_date >= m.month_start)
+                    THEN 1 ELSE 0 END)                     AS active_at_start,
+           SUM(CASE WHEN c.end_date BETWEEN m.month_start AND m.month_end
+                    THEN 1 ELSE 0 END)                     AS disconnects
+    FROM months m
+    CROSS JOIN dim_customer c
+    GROUP BY m.year_month
+)
+SELECT year_month,
+       active_at_start,
+       disconnects,
+       ROUND(100.0 * disconnects / MAX(active_at_start, 1), 2) AS churn_pct
+FROM counts;
